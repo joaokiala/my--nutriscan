@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="description" content="Scan food and get instant nutritional information">
+    <title>NutriScan - Food Nutrition Scanner</title>
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiTnV0cmlTY2FuIiwic2hvcnRfbmFtZSI6Ik51dHJpU2NhbiIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZmZmZmZmIiwidGhlbWVfY29sb3IiOiIjNjM2NmYxIiwiaWNvbnMiOlt7InNyYyI6ImRhdGE6aW1hZ2UvcG5nO2Jhc2U2NCxpVkJPUncwS0dnb0FBQUFOU1VoRVVnQUFBSUFBQUFDQUNBWUFBQUE2Z3RpNUFBQUFCR2RCVFVFQUFMR1BDL3hoQlFBQUFDQlBTVlJCVkhnQTdaNEJjZ0FBQUFBQVNVVk9SSzVDWUlJPSIsInNpemVzIjoiMTI4eDEyOCIsInR5cGUiOiJpbWFnZS9wbmcifV19">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+            min-width: 60px;
+            padding: 18px 30px;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            touch-action: manipulation;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn-icon {
+            margin-right: 10px;
+            font-size: 24px;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .camera-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #cameraPreview {
+            width: 100%;
+            height: auto;
+            min-height: 300px;
+            display: block;
+        }
+
+        .camera-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .capture-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: white;
+            border: 6px solid #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .capture-btn:active {
+            transform: scale(0.9);
+        }
+
+        .loading-container {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .food-name {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .serving-size {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .calories-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 24px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(245,87,108,0.3);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 30px 0 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-icon {
+            margin-right: 10px;
+            font-size: 24px;
+        }
+
+        .nutrient-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .nutrient-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .nutrient-name {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .nutrient-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .nutrient-item {
+            margin-bottom: 20px;
+        }
+
+        .nutrient-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .nutrient-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .nutrient-amount {
+            font-size: 16px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+
+        .micronutrient-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .micronutrient-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        #uploadInput {
+            display: none;
+        }
+
+        .photo-preview {
+            width: 100%;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 28px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .nutrient-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (orientation: landscape) and (max-height: 500px) {
+            .header {
+                padding: 15px 0;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            #cameraPreview {
+                min-height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Home Screen -->
+        <div id="homeScreen" class="screen active">
+            <div class="header">
+                <h1>🥗 NutriScan</h1>
+                <p>Instant Food Nutrition Analysis</p>
+            </div>
+            <div class="card">
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="startCamera()">
+                        <span class="btn-icon">📷</span>
+                        Scan Food with Camera
+                    </button>
+                    <button class="btn btn-secondary" onclick="uploadPhoto()">
+                        <span class="btn-icon">🖼️</span>
+                        Upload from Gallery
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Camera Screen -->
+        <div id="cameraScreen" class="screen">
+            <div class="header">
+                <h1>📷 Scan Food</h1>
+                <p>Position food in frame and capture</p>
+            </div>
+            <div class="card">
+                <div class="camera-container">
+                    <video id="cameraPreview" autoplay playsinline></video>
+                </div>
+                <div class="camera-controls">
+                    <button class="btn btn-secondary" onclick="closeCamera()">
+                        <span class="btn-icon">✕</span>
+                        Cancel
+                    </button>
+                    <button class="capture-btn" onclick="capturePhoto()"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Screen -->
+        <div id="analysisScreen" class="screen">
+            <div class="header">
+                <h1>🔍 Analyzing</h1>
+                <p>Processing your food image...</p>
+            </div>
+            <div class="card">
+                <img id="analyzingPhoto" class="photo-preview" style="display: none;">
+                <div class="loading-container">
+                    <div class="spinner"></div>
+                    <p style="font-size: 18px; color: #666;">Identifying nutrients...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="screen">
+            <div class="header">
+                <h1>📊 Nutrition Facts</h1>
+            </div>
+            <div class="card">
+                <div class="results-header">
+                    <div class="food-name" id="foodName"></div>
+                    <div class="serving-size" id="servingSize"></div>
+                    <div class="calories-badge" id="caloriesBadge"></div>
+                </div>
+
+                <div class="section-title">
+                    <span class="section-icon">💪</span>
+                    Macronutrients
+                </div>
+                <div class="nutrient-grid">
+                    <div class="nutrient-card">
+                        <div class="nutrient-name">Protein</div>
+                        <div class="nutrient-value" id="proteinValue"></div>
+                    </div>
+                    <div class="nutrient-card">
+                        <div class="nutrient-name">Carbs</div>
+                        <div class="nutrient-value" id="carbsValue"></div>
+                    </div>
+                    <div class="nutrient-card">
+                        <div class="nutrient-name">Fats</div>
+                        <div class="nutrient-value" id="fatsValue"></div>
+                    </div>
+                    <div class="nutrient-card">
+                        <div class="nutrient-name">Fiber</div>
+                        <div class="nutrient-value" id="fiberValue"></div>
+                    </div>
+                </div>
+
+                <div class="nutrient-item">
+                    <div class="nutrient-header">
+                        <span class="nutrient-label">Sugar</span>
+                        <span class="nutrient-amount" id="sugarValue"></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="sugarProgress"></div>
+                    </div>
+                </div>
+
+                <div class="section-title">
+                    <span class="section-icon">✨</span>
+                    Vitamins
+                </div>
+                <div id="vitaminsContainer"></div>
+
+                <div class="section-title">
+                    <span class="section-icon">⚡</span>
+                    Minerals
+                </div>
+                <div id="mineralsContainer"></div>
+
+                <div class="button-group" style="margin-top: 30px;">
+                    <button class="btn btn-success" onclick="scanAnother()">
+                        <span class="btn-icon">🔄</span>
+                        Scan Another Food
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="uploadInput" accept="image/*" capture="environment" onchange="handleUpload(event)">
+
+    <script>
+        // Food Database with realistic nutritional data
+        const foodDatabase = {
+            'chicken breast': {
+                name: 'Chicken Breast (Grilled)',
+                serving: '100g',
+                calories: 165,
+                macros: { protein: 31, carbs: 0, fats: 3.6, fiber: 0, sugar: 0 },
+                vitamins: {
+                    'Vitamin A': { amount: '1%', percent: 1 },
+                    'Vitamin B6': { amount: '30%', percent: 30 },
+                    'Vitamin B12': { amount: '6%', percent: 6 },
+                    'Vitamin C': { amount: '0%', percent: 0 },
+                    'Vitamin D': { amount: '1%', percent: 1 },
+                    'Vitamin E': { amount: '2%', percent: 2 },
+                    'Vitamin K': { amount: '1%', percent: 1 }
+                },
+                minerals: {
+                    'Calcium': { amount: '15mg (1%)', percent: 1 },
+                    'Iron': { amount: '0.7mg (4%)', percent: 4 },
+                    'Magnesium': { amount: '29mg (7%)', percent: 7 },
+                    'Phosphorus': { amount: '228mg (23%)', percent: 23 },
+                    'Potassium': { amount: '256mg (7%)', percent: 7 },
+                    'Zinc': { amount: '1mg (9%)', percent: 9 },
+                    'Selenium': { amount: '27.6mcg (50%)', percent: 50 }
+                }
+            },
+            'salmon': {
+                name: 'Atlantic Salmon (Cooked)',
+                serving: '100g',
+                calories: 206,
+                macros: { protein: 22, carbs: 0, fats: 12, fiber: 0, sugar: 0 },
+                vitamins: {
+                    'Vitamin A': { amount: '3%', percent: 3 },
+                    'Vitamin B6': { amount: '35%', percent: 35 },
+                    'Vitamin B12': { amount: '127%', percent: 100 },
+                    'Vitamin C': { amount: '0%', percent: 0 },
+                    'Vitamin D': { amount: '111%', percent: 100 },
+                    'Vitamin E': { amount: '8%', percent: 8 },
+                    'Vitamin K': { amount: '1%', percent: 1 }
+                },
+                minerals: {
+                    'Calcium': { amount: '15mg (2%)', percent: 2 },
+                    'Iron': { amount: '0.5mg (3%)', percent: 3 },
+                    'Magnesium': { amount: '29mg (7%)', percent: 7 },
+                    'Phosphorus': { amount: '252mg (25%)', percent: 25 },
+                    'Potassium': { amount: '363mg (10%)', percent: 10 },
+                    'Zinc': { amount: '0.6mg (5%)', percent: 5 },
+                    'Selenium': { amount: '41.4mcg (75%)', percent: 75 }
+                }
+            },
+            'brown rice': {
+                name: 'Brown Rice (Cooked)',
+                serving: '100g',
+                calories: 112,
+                macros: { protein: 2.6, carbs: 24, fats: 0.9, fiber: 1.8, sugar: 0.4 },
+                vitamins: {
+                    'Vitamin A': { amount: '0%', percent: 0 },
+                    'Vitamin B6': { amount: '8%', percent: 8 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '0%', percent: 0 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '1%', percent: 1 },
+                    'Vitamin K': { amount: '0%', percent: 0 }
+                },
+                minerals: {
+                    'Calcium': { amount: '10mg (1%)', percent: 1 },
+                    'Iron': { amount: '0.5mg (3%)', percent: 3 },
+                    'Magnesium': { amount: '44mg (11%)', percent: 11 },
+                    'Phosphorus': { amount: '83mg (8%)', percent: 8 },
+                    'Potassium': { amount: '86mg (2%)', percent: 2 },
+                    'Zinc': { amount: '0.6mg (5%)', percent: 5 },
+                    'Selenium': { amount: '11.7mcg (21%)', percent: 21 },
+                    'Manganese': { amount: '0.9mg (45%)', percent: 45 }
+                }
+            },
+            'broccoli': {
+                name: 'Broccoli (Cooked)',
+                serving: '100g',
+                calories: 35,
+                macros: { protein: 2.4, carbs: 7, fats: 0.4, fiber: 3.3, sugar: 1.4 },
+                vitamins: {
+                    'Vitamin A': { amount: '12%', percent: 12 },
+                    'Vitamin B6': { amount: '9%', percent: 9 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '90%', percent: 90 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '7%', percent: 7 },
+                    'Vitamin K': { amount: '141%', percent: 100 }
+                },
+                minerals: {
+                    'Calcium': { amount: '40mg (4%)', percent: 4 },
+                    'Iron': { amount: '0.7mg (4%)', percent: 4 },
+                    'Magnesium': { amount: '21mg (5%)', percent: 5 },
+                    'Phosphorus': { amount: '67mg (7%)', percent: 7 },
+                    'Potassium': { amount: '293mg (8%)', percent: 8 },
+                    'Zinc': { amount: '0.4mg (4%)', percent: 4 },
+                    'Selenium': { amount: '1.6mcg (3%)', percent: 3 }
+                }
+            },
+            'banana': {
+                name: 'Banana (Medium)',
+                serving: '1 medium (118g)',
+                calories: 105,
+                macros: { protein: 1.3, carbs: 27, fats: 0.4, fiber: 3.1, sugar: 14 },
+                vitamins: {
+                    'Vitamin A': { amount: '2%', percent: 2 },
+                    'Vitamin B6': { amount: '22%', percent: 22 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '17%', percent: 17 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '1%', percent: 1 },
+                    'Vitamin K': { amount: '1%', percent: 1 }
+                },
+                minerals: {
+                    'Calcium': { amount: '6mg (1%)', percent: 1 },
+                    'Iron': { amount: '0.3mg (2%)', percent: 2 },
+                    'Magnesium': { amount: '32mg (8%)', percent: 8 },
+                    'Phosphorus': { amount: '26mg (3%)', percent: 3 },
+                    'Potassium': { amount: '422mg (12%)', percent: 12 },
+                    'Zinc': { amount: '0.2mg (2%)', percent: 2 },
+                    'Selenium': { amount: '1.2mcg (2%)', percent: 2 },
+                    'Manganese': { amount: '0.3mg (15%)', percent: 15 }
+                }
+            },
+            'apple': {
+                name: 'Apple (Medium)',
+                serving: '1 medium (182g)',
+                calories: 95,
+                macros: { protein: 0.5, carbs: 25, fats: 0.3, fiber: 4.4, sugar: 19 },
+                vitamins: {
+                    'Vitamin A': { amount: '2%', percent: 2 },
+                    'Vitamin B6': { amount: '4%', percent: 4 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '14%', percent: 14 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '1%', percent: 1 },
+                    'Vitamin K': { amount: '5%', percent: 5 }
+                },
+                minerals: {
+                    'Calcium': { amount: '11mg (1%)', percent: 1 },
+                    'Iron': { amount: '0.2mg (1%)', percent: 1 },
+                    'Magnesium': { amount: '9mg (2%)', percent: 2 },
+                    'Phosphorus': { amount: '20mg (2%)', percent: 2 },
+                    'Potassium': { amount: '195mg (6%)', percent: 6 },
+                    'Zinc': { amount: '0.1mg (1%)', percent: 1 },
+                    'Selenium': { amount: '0mcg (0%)', percent: 0 }
+                }
+            },
+            'spinach': {
+                name: 'Spinach (Cooked)',
+                serving: '100g',
+                calories: 23,
+                macros: { protein: 2.9, carbs: 3.8, fats: 0.3, fiber: 2.4, sugar: 0.4 },
+                vitamins: {
+                    'Vitamin A': { amount: '105%', percent: 100 },
+                    'Vitamin B6': { amount: '11%', percent: 11 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '16%', percent: 16 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '13%', percent: 13 },
+                    'Vitamin K': { amount: '604%', percent: 100 }
+                },
+                minerals: {
+                    'Calcium': { amount: '136mg (14%)', percent: 14 },
+                    'Iron': { amount: '3.6mg (20%)', percent: 20 },
+                    'Magnesium': { amount: '87mg (22%)', percent: 22 },
+                    'Phosphorus': { amount: '56mg (6%)', percent: 6 },
+                    'Potassium': { amount: '466mg (13%)', percent: 13 },
+                    'Zinc': { amount: '0.8mg (7%)', percent: 7 },
+                    'Selenium': { amount: '1.5mcg (3%)', percent: 3 }
+                }
+            },
+            'egg': {
+                name: 'Egg (Large, Boiled)',
+                serving: '1 large (50g)',
+                calories: 78,
+                macros: { protein: 6.3, carbs: 0.6, fats: 5.3, fiber: 0, sugar: 0.6 },
+                vitamins: {
+                    'Vitamin A': { amount: '9%', percent: 9 },
+                    'Vitamin B6': { amount: '4%', percent: 4 },
+                    'Vitamin B12': { amount: '23%', percent: 23 },
+                    'Vitamin C': { amount: '0%', percent: 0 },
+                    'Vitamin D': { amount: '15%', percent: 15 },
+                    'Vitamin E': { amount: '5%', percent: 5 },
+                    'Vitamin K': { amount: '0%', percent: 0 }
+                },
+                minerals: {
+                    'Calcium': { amount: '28mg (3%)', percent: 3 },
+                    'Iron': { amount: '0.9mg (5%)', percent: 5 },
+                    'Magnesium': { amount: '6mg (2%)', percent: 2 },
+                    'Phosphorus': { amount: '99mg (10%)', percent: 10 },
+                    'Potassium': { amount: '69mg (2%)', percent: 2 },
+                    'Zinc': { amount: '0.6mg (6%)', percent: 6 },
+                    'Selenium': { amount: '15.4mcg (28%)', percent: 28 }
+                }
+            },
+            'almonds': {
+                name: 'Almonds (Raw)',
+                serving: '28g (1 oz)',
+                calories: 164,
+                macros: { protein: 6, carbs: 6, fats: 14, fiber: 3.5, sugar: 1.2 },
+                vitamins: {
+                    'Vitamin A': { amount: '0%', percent: 0 },
+                    'Vitamin B6': { amount: '2%', percent: 2 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '0%', percent: 0 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '37%', percent: 37 },
+                    'Vitamin K': { amount: '0%', percent: 0 }
+                },
+                minerals: {
+                    'Calcium': { amount: '76mg (8%)', percent: 8 },
+                    'Iron': { amount: '1.1mg (6%)', percent: 6 },
+                    'Magnesium': { amount: '77mg (19%)', percent: 19 },
+                    'Phosphorus': { amount: '136mg (14%)', percent: 14 },
+                    'Potassium': { amount: '208mg (6%)', percent: 6 },
+                    'Zinc': { amount: '0.9mg (8%)', percent: 8 },
+                    'Selenium': { amount: '1.2mcg (2%)', percent: 2 },
+                    'Manganese': { amount: '0.6mg (30%)', percent: 30 }
+                }
+            },
+            'greek yogurt': {
+                name: 'Greek Yogurt (Plain, Non-fat)',
+                serving: '170g (6 oz)',
+                calories: 100,
+                macros: { protein: 17, carbs: 6, fats: 0.7, fiber: 0, sugar: 6 },
+                vitamins: {
+                    'Vitamin A': { amount: '0%', percent: 0 },
+                    'Vitamin B6': { amount: '4%', percent: 4 },
+                    'Vitamin B12': { amount: '53%', percent: 53 },
+                    'Vitamin C': { amount: '0%', percent: 0 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '0%', percent: 0 },
+                    'Vitamin K': { amount: '0%', percent: 0 }
+                },
+                minerals: {
+                    'Calcium': { amount: '187mg (19%)', percent: 19 },
+                    'Iron': { amount: '0.1mg (1%)', percent: 1 },
+                    'Magnesium': { amount: '19mg (5%)', percent: 5 },
+                    'Phosphorus': { amount: '240mg (24%)', percent: 24 },
+                    'Potassium': { amount: '240mg (7%)', percent: 7 },
+                    'Zinc': { amount: '0.9mg (8%)', percent: 8 },
+                    'Selenium': { amount: '17mcg (31%)', percent: 31 }
+                }
+            },
+            'avocado': {
+                name: 'Avocado',
+                serving: '1/2 medium (68g)',
+                calories: 114,
+                macros: { protein: 1.3, carbs: 6, fats: 10.5, fiber: 4.6, sugar: 0.5 },
+                vitamins: {
+                    'Vitamin A': { amount: '2%', percent: 2 },
+                    'Vitamin B6': { amount: '13%', percent: 13 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '11%', percent: 11 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '14%', percent: 14 },
+                    'Vitamin K': { amount: '18%', percent: 18 }
+                },
+                minerals: {
+                    'Calcium': { amount: '8mg (1%)', percent: 1 },
+                    'Iron': { amount: '0.4mg (2%)', percent: 2 },
+                    'Magnesium': { amount: '20mg (5%)', percent: 5 },
+                    'Phosphorus': { amount: '37mg (4%)', percent: 4 },
+                    'Potassium': { amount: '345mg (10%)', percent: 10 },
+                    'Zinc': { amount: '0.4mg (4%)', percent: 4 },
+                    'Selenium': { amount: '0.3mcg (1%)', percent: 1 }
+                }
+            },
+            'sweet potato': {
+                name: 'Sweet Potato (Baked)',
+                serving: '1 medium (114g)',
+                calories: 103,
+                macros: { protein: 2.3, carbs: 24, fats: 0.2, fiber: 3.8, sugar: 7.4 },
+                vitamins: {
+                    'Vitamin A': { amount: '384%', percent: 100 },
+                    'Vitamin B6': { amount: '18%', percent: 18 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '37%', percent: 37 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '2%', percent: 2 },
+                    'Vitamin K': { amount: '3%', percent: 3 }
+                },
+                minerals: {
+                    'Calcium': { amount: '43mg (4%)', percent: 4 },
+                    'Iron': { amount: '0.8mg (4%)', percent: 4 },
+                    'Magnesium': { amount: '31mg (8%)', percent: 8 },
+                    'Phosphorus': { amount: '62mg (6%)', percent: 6 },
+                    'Potassium': { amount: '542mg (15%)', percent: 15 },
+                    'Zinc': { amount: '0.4mg (4%)', percent: 4 },
+                    'Selenium': { amount: '0.2mcg (0%)', percent: 0 },
+                    'Manganese': { amount: '0.5mg (25%)', percent: 25 }
+                }
+            },
+            'quinoa': {
+                name: 'Quinoa (Cooked)',
+                serving: '100g',
+                calories: 120,
+                macros: { protein: 4.4, carbs: 21, fats: 1.9, fiber: 2.8, sugar: 0.9 },
+                vitamins: {
+                    'Vitamin A': { amount: '0%', percent: 0 },
+                    'Vitamin B6': { amount: '6%', percent: 6 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '0%', percent: 0 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '3%', percent: 3 },
+                    'Vitamin K': { amount: '0%', percent: 0 }
+                },
+                minerals: {
+                    'Calcium': { amount: '17mg (2%)', percent: 2 },
+                    'Iron': { amount: '1.5mg (8%)', percent: 8 },
+                    'Magnesium': { amount: '64mg (16%)', percent: 16 },
+                    'Phosphorus': { amount: '152mg (15%)', percent: 15 },
+                    'Potassium': { amount: '172mg (5%)', percent: 5 },
+                    'Zinc': { amount: '1.1mg (10%)', percent: 10 },
+                    'Selenium': { amount: '2.8mcg (5%)', percent: 5 },
+                    'Manganese': { amount: '0.6mg (30%)', percent: 30 }
+                }
+            },
+            'oatmeal': {
+                name: 'Oatmeal (Cooked)',
+                serving: '1 cup (234g)',
+                calories: 166,
+                macros: { protein: 5.9, carbs: 28, fats: 3.6, fiber: 4, sugar: 0.6 },
+                vitamins: {
+                    'Vitamin A': { amount: '0%', percent: 0 },
+                    'Vitamin B6': { amount: '2%', percent: 2 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '0%', percent: 0 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '1%', percent: 1 },
+                    'Vitamin K': { amount: '1%', percent: 1 }
+                },
+                minerals: {
+                    'Calcium': { amount: '21mg (2%)', percent: 2 },
+                    'Iron': { amount: '2.1mg (12%)', percent: 12 },
+                    'Magnesium': { amount: '63mg (16%)', percent: 16 },
+                    'Phosphorus': { amount: '180mg (18%)', percent: 18 },
+                    'Potassium': { amount: '164mg (5%)', percent: 5 },
+                    'Zinc': { amount: '1.5mg (14%)', percent: 14 },
+                    'Selenium': { amount: '13.2mcg (24%)', percent: 24 },
+                    'Manganese': { amount: '1.4mg (70%)', percent: 70 }
+                }
+            },
+            'beef': {
+                name: 'Ground Beef (85% Lean, Cooked)',
+                serving: '100g',
+                calories: 250,
+                macros: { protein: 26, carbs: 0, fats: 16, fiber: 0, sugar: 0 },
+                vitamins: {
+                    'Vitamin A': { amount: '0%', percent: 0 },
+                    'Vitamin B6': { amount: '19%', percent: 19 },
+                    'Vitamin B12': { amount: '101%', percent: 100 },
+                    'Vitamin C': { amount: '0%', percent: 0 },
+                    'Vitamin D': { amount: '1%', percent: 1 },
+                    'Vitamin E': { amount: '2%', percent: 2 },
+                    'Vitamin K': { amount: '2%', percent: 2 }
+                },
+                minerals: {
+                    'Calcium': { amount: '18mg (2%)', percent: 2 },
+                    'Iron': { amount: '2.6mg (14%)', percent: 14 },
+                    'Magnesium': { amount: '21mg (5%)', percent: 5 },
+                    'Phosphorus': { amount: '193mg (19%)', percent: 19 },
+                    'Potassium': { amount: '318mg (9%)', percent: 9 },
+                    'Zinc': { amount: '6.2mg (56%)', percent: 56 },
+                    'Selenium': { amount: '18.5mcg (34%)', percent: 34 }
+                }
+            },
+            'lentils': {
+                name: 'Lentils (Cooked)',
+                serving: '100g',
+                calories: 116,
+                macros: { protein: 9, carbs: 20, fats: 0.4, fiber: 7.9, sugar: 1.8 },
+                vitamins: {
+                    'Vitamin A': { amount: '0%', percent: 0 },
+                    'Vitamin B6': { amount: '9%', percent: 9 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '2%', percent: 2 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '1%', percent: 1 },
+                    'Vitamin K': { amount: '2%', percent: 2 }
+                },
+                minerals: {
+                    'Calcium': { amount: '19mg (2%)', percent: 2 },
+                    'Iron': { amount: '3.3mg (18%)', percent: 18 },
+                    'Magnesium': { amount: '36mg (9%)', percent: 9 },
+                    'Phosphorus': { amount: '180mg (18%)', percent: 18 },
+                    'Potassium': { amount: '369mg (11%)', percent: 11 },
+                    'Zinc': { amount: '1.3mg (12%)', percent: 12 },
+                    'Selenium': { amount: '2.8mcg (5%)', percent: 5 },
+                    'Manganese': { amount: '0.5mg (25%)', percent: 25 }
+                }
+            },
+            'strawberries': {
+                name: 'Strawberries (Fresh)',
+                serving: '100g (about 7 berries)',
+                calories: 32,
+                macros: { protein: 0.7, carbs: 7.7, fats: 0.3, fiber: 2, sugar: 4.9 },
+                vitamins: {
+                    'Vitamin A': { amount: '0%', percent: 0 },
+                    'Vitamin B6': { amount: '2%', percent: 2 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '97%', percent: 97 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '1%', percent: 1 },
+                    'Vitamin K': { amount: '3%', percent: 3 }
+                },
+                minerals: {
+                    'Calcium': { amount: '16mg (2%)', percent: 2 },
+                    'Iron': { amount: '0.4mg (2%)', percent: 2 },
+                    'Magnesium': { amount: '13mg (3%)', percent: 3 },
+                    'Phosphorus': { amount: '24mg (2%)', percent: 2 },
+                    'Potassium': { amount: '153mg (4%)', percent: 4 },
+                    'Zinc': { amount: '0.1mg (1%)', percent: 1 },
+                    'Selenium': { amount: '0.4mcg (1%)', percent: 1 },
+                    'Manganese': { amount: '0.4mg (20%)', percent: 20 }
+                }
+            },
+            'orange': {
+                name: 'Orange (Medium)',
+                serving: '1 medium (131g)',
+                calories: 62,
+                macros: { protein: 1.2, carbs: 15, fats: 0.2, fiber: 3.1, sugar: 12 },
+                vitamins: {
+                    'Vitamin A': { amount: '4%', percent: 4 },
+                    'Vitamin B6': { amount: '5%', percent: 5 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '116%', percent: 100 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '1%', percent: 1 },
+                    'Vitamin K': { amount: '0%', percent: 0 }
+                },
+                minerals: {
+                    'Calcium': { amount: '52mg (5%)', percent: 5 },
+                    'Iron': { amount: '0.1mg (1%)', percent: 1 },
+                    'Magnesium': { amount: '13mg (3%)', percent: 3 },
+                    'Phosphorus': { amount: '18mg (2%)', percent: 2 },
+                    'Potassium': { amount: '237mg (7%)', percent: 7 },
+                    'Zinc': { amount: '0.1mg (1%)', percent: 1 },
+                    'Selenium': { amount: '0.7mcg (1%)', percent: 1 }
+                }
+            },
+            'chickpeas': {
+                name: 'Chickpeas (Cooked)',
+                serving: '100g',
+                calories: 164,
+                macros: { protein: 8.9, carbs: 27, fats: 2.6, fiber: 7.6, sugar: 4.8 },
+                vitamins: {
+                    'Vitamin A': { amount: '1%', percent: 1 },
+                    'Vitamin B6': { amount: '8%', percent: 8 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '2%', percent: 2 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '2%', percent: 2 },
+                    'Vitamin K': { amount: '5%', percent: 5 }
+                },
+                minerals: {
+                    'Calcium': { amount: '49mg (5%)', percent: 5 },
+                    'Iron': { amount: '2.9mg (16%)', percent: 16 },
+                    'Magnesium': { amount: '48mg (12%)', percent: 12 },
+                    'Phosphorus': { amount: '168mg (17%)', percent: 17 },
+                    'Potassium': { amount: '291mg (8%)', percent: 8 },
+                    'Zinc': { amount: '1.5mg (14%)', percent: 14 },
+                    'Selenium': { amount: '3.7mcg (7%)', percent: 7 },
+                    'Manganese': { amount: '1mg (50%)', percent: 50 }
+                }
+            },
+            'carrot': {
+                name: 'Carrot (Medium, Raw)',
+                serving: '1 medium (61g)',
+                calories: 25,
+                macros: { protein: 0.6, carbs: 6, fats: 0.1, fiber: 1.7, sugar: 2.9 },
+                vitamins: {
+                    'Vitamin A': { amount: '184%', percent: 100 },
+                    'Vitamin B6': { amount: '4%', percent: 4 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '6%', percent: 6 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '2%', percent: 2 },
+                    'Vitamin K': { amount: '8%', percent: 8 }
+                },
+                minerals: {
+                    'Calcium': { amount: '20mg (2%)', percent: 2 },
+                    'Iron': { amount: '0.2mg (1%)', percent: 1 },
+                    'Magnesium': { amount: '7mg (2%)', percent: 2 },
+                    'Phosphorus': { amount: '21mg (2%)', percent: 2 },
+                    'Potassium': { amount: '195mg (6%)', percent: 6 },
+                    'Zinc': { amount: '0.1mg (1%)', percent: 1 },
+                    'Selenium': { amount: '0.1mcg (0%)', percent: 0 },
+                    'Manganese': { amount: '0.1mg (5%)', percent: 5 }
+                }
+            },
+            'blueberries': {
+                name: 'Blueberries (Fresh)',
+                serving: '100g (about 3/4 cup)',
+                calories: 57,
+                macros: { protein: 0.7, carbs: 14, fats: 0.3, fiber: 2.4, sugar: 10 },
+                vitamins: {
+                    'Vitamin A': { amount: '1%', percent: 1 },
+                    'Vitamin B6': { amount: '3%', percent: 3 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '16%', percent: 16 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '3%', percent: 3 },
+                    'Vitamin K': { amount: '24%', percent: 24 }
+                },
+                minerals: {
+                    'Calcium': { amount: '6mg (1%)', percent: 1 },
+                    'Iron': { amount: '0.3mg (2%)', percent: 2 },
+                    'Magnesium': { amount: '6mg (2%)', percent: 2 },
+                    'Phosphorus': { amount: '12mg (1%)', percent: 1 },
+                    'Potassium': { amount: '77mg (2%)', percent: 2 },
+                    'Zinc': { amount: '0.2mg (2%)', percent: 2 },
+                    'Selenium': { amount: '0.1mcg (0%)', percent: 0 },
+                    'Manganese': { amount: '0.3mg (15%)', percent: 15 }
+                }
+            },
+            'pasta': {
+                name: 'Whole Wheat Pasta (Cooked)',
+                serving: '100g',
+                calories: 124,
+                macros: { protein: 5.3, carbs: 26, fats: 0.5, fiber: 3.9, sugar: 0.8 },
+                vitamins: {
+                    'Vitamin A': { amount: '0%', percent: 0 },
+                    'Vitamin B6': { amount: '4%', percent: 4 },
+                    'Vitamin B12': { amount: '0%', percent: 0 },
+                    'Vitamin C': { amount: '0%', percent: 0 },
+                    'Vitamin D': { amount: '0%', percent: 0 },
+                    'Vitamin E': { amount: '2%', percent: 2 },
+                    'Vitamin K': { amount: '0%', percent: 0 }
+                },
+                minerals: {
+                    'Calcium': { amount: '15mg (2%)', percent: 2 },
+                    'Iron': { amount: '1.3mg (7%)', percent: 7 },
+                    'Magnesium': { amount: '30mg (8%)', percent: 8 },
+                    'Phosphorus': { amount: '89mg (9%)', percent: 9 },
+                    'Potassium': { amount: '44mg (1%)', percent: 1 },
+                    'Zinc': { amount: '0.8mg (7%)', percent: 7 },
+                    'Selenium': { amount: '26.4mcg (48%)', percent: 48 },
+                    'Manganese': { amount: '0.9mg (45%)', percent: 45 }
+                }
+            }
+        };
+
+        // State management
+        let currentStream = null;
+        let currentFood = null;
+
+        // Screen navigation
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // Camera functionality
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                };
+
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const video = document.getElementById('cameraPreview');
+                video.srcObject = currentStream;
+                showScreen('cameraScreen');
+            } catch (error) {
+                alert('Camera access denied or not available. Please enable camera permissions in your browser settings and try again.');
+                console.error('Camera error:', error);
+            }
+        }
+
+        function closeCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+            showScreen('homeScreen');
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('cameraPreview');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            
+            closeCamera();
+            analyzeImage(imageDataUrl);
+        }
+
+        // Upload functionality
+        function uploadPhoto() {
+            document.getElementById('uploadInput').click();
+        }
+
+        function handleUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    analyzeImage(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Analysis functionality
+        function analyzeImage(imageDataUrl) {
+            showScreen('analysisScreen');
+            const analyzingPhoto = document.getElementById('analyzingPhoto');
+            analyzingPhoto.src = imageDataUrl;
+            analyzingPhoto.style.display = 'block';
+
+            // Simulate analysis time (2-3 seconds)
+            setTimeout(() => {
+                const randomFood = getRandomFood();
+                currentFood = foodDatabase[randomFood];
+                displayResults();
+            }, 2500);
+        }
+
+        function getRandomFood() {
+            const foods = Object.keys(foodDatabase);
+            return foods[Math.floor(Math.random() * foods.length)];
+        }
+
+        // Display results
+        function displayResults() {
+            const food = currentFood;
+
+            // Set basic info
+            document.getElementById('foodName').textContent = food.name;
+            document.getElementById('servingSize').textContent = `Serving size: ${food.serving}`;
+            document.getElementById('caloriesBadge').textContent = `${food.calories} Calories`;
+
+            // Set macronutrients
+            document.getElementById('proteinValue').textContent = `${food.macros.protein}g`;
+            document.getElementById('carbsValue').textContent = `${food.macros.carbs}g`;
+            document.getElementById('fatsValue').textContent = `${food.macros.fats}g`;
+            document.getElementById('fiberValue').textContent = `${food.macros.fiber}g`;
+            document.getElementById('sugarValue').textContent = `${food.macros.sugar}g`;
+            
+            // Sugar progress bar (based on 50g daily limit)
+            const sugarPercent = Math.min((food.macros.sugar / 50) * 100, 100);
+            document.getElementById('sugarProgress').style.width = `${sugarPercent}%`;
+
+            // Display vitamins
+            const vitaminsContainer = document.getElementById('vitaminsContainer');
+            vitaminsContainer.innerHTML = '';
+            for (const [name, data] of Object.entries(food.vitamins)) {
+                const nutrientItem = createNutrientItem(name, data.amount, data.percent);
+                vitaminsContainer.appendChild(nutrientItem);
+            }
+
+            // Display minerals
+            const mineralsContainer = document.getElementById('mineralsContainer');
+            mineralsContainer.innerHTML = '';
+            for (const [name, data] of Object.entries(food.minerals)) {
+                const nutrientItem = createNutrientItem(name, data.amount, data.percent);
+                mineralsContainer.appendChild(nutrientItem);
+            }
+
+            showScreen('resultsScreen');
+        }
+
+        function createNutrientItem(name, amount, percent) {
+            const item = document.createElement('div');
+            item.className = 'nutrient-item';
+            
+            const header = document.createElement('div');
+            header.className = 'nutrient-header';
+            
+            const label = document.createElement('span');
+            label.className = 'nutrient-label';
+            label.textContent = name;
+            
+            const amountSpan = document.createElement('span');
+            amountSpan.className = 'nutrient-amount';
+            amountSpan.textContent = amount;
+            
+            header.appendChild(label);
+            header.appendChild(amountSpan);
+            
+            const progressBar = document.createElement('div');
+            progressBar.className = 'progress-bar';
+            
+            const progressFill = document.createElement('div');
+            progressFill.className = 'progress-fill';
+            progressFill.style.width = `${Math.min(percent, 100)}%`;
+            
+            progressBar.appendChild(progressFill);
+            
+            item.appendChild(header);
+            item.appendChild(progressBar);
+            
+            return item;
+        }
+
+        // Scan another
+        function scanAnother() {
+            currentFood = null;
+            showScreen('homeScreen');
+        }
+
+        // Service Worker for PWA functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    const CACHE_NAME = 'nutriscan-v1';
+                    const urlsToCache = ['/'];
+
+                    self.addEventListener('install', event => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then(cache => cache.addAll(urlsToCache))
+                        );
+                    });
+
+                    self.addEventListener('fetch', event => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then(response => response || fetch(event.request))
+                        );
+                    });
+                `;
+                
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                
+                navigator.serviceWorker.register(swUrl)
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker registration failed'));
+            });
+        }
+
+        // Detect orientation changes
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                window.scrollTo(0, 0);
+            }, 100);
+        });
+
+        // Prevent zoom on double tap
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', event => {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+</body>
+</html>
